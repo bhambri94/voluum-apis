@@ -25,6 +25,12 @@ func SetConfig() {
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
-	json.Unmarshal(input, &Configurations)
-	fmt.Println(Configurations)
+	error := json.Unmarshal(input, &Configurations)
+	if error != nil {
+		fmt.Println("Config file is missing in root directory")
+		panic(error)
+	} else {
+		fmt.Println("Follwing values has been picked from ")
+		fmt.Println(Configurations)
+	}
 }

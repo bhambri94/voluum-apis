@@ -107,7 +107,7 @@ func Read(readRange string) {
 	}
 }
 
-func BatchWrite(writeRange string, value [][]interface{}) {
+func BatchWrite(SheetName string, value [][]interface{}) {
 	if srv == nil {
 		srv = getClient()
 	}
@@ -116,12 +116,15 @@ func BatchWrite(writeRange string, value [][]interface{}) {
 		ValueInputOption: "USER_ENTERED",
 	}
 	rb.Data = append(rb.Data, &sheets.ValueRange{
-		Range:  writeRange,
+		Range:  SheetName + "!A1",
 		Values: value,
 	})
+	fmt.Println("Writing data to Google Sheets with data")
 	_, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(context.Background()).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet. %v", err)
+	} else {
+		fmt.Println("Voluum report has been pushed to Google Sheet")
 	}
 }
 
@@ -148,7 +151,6 @@ func ClearSheet(SheetName string) {
 		srv = getClient()
 	}
 	spreadsheetId = config.Configurations.SpreadsheetId
-	fmt.Println(spreadsheetId)
 	_, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
 	if err != nil {
 		fmt.Printf("Unable to retrieve data from sheet name: %v", err)
@@ -157,7 +159,7 @@ func ClearSheet(SheetName string) {
 	}
 
 	if itt {
-		fmt.Println("creating new sheet with sheetname: " + SheetName)
+		fmt.Println("Creating new sheet with sheetname: " + SheetName)
 		req := sheets.Request{
 			AddSheet: &sheets.AddSheetRequest{
 				Properties: &sheets.SheetProperties{
@@ -174,7 +176,7 @@ func ClearSheet(SheetName string) {
 		}
 
 	} else {
-		fmt.Println("clearing the previous sheet")
+		fmt.Println("Clearing the sheet's old data and pulling data for new Day")
 		ranges := SheetName + "!A1:CZ1000"
 		rb := &sheets.ClearValuesRequest{}
 		_, err := srv.Spreadsheets.Values.Clear(spreadsheetId, ranges, rb).Context(context.Background()).Do()

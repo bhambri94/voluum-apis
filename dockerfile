@@ -11,9 +11,7 @@ WORKDIR /go/src/app
 COPY / /go/src/app/
 
 # installing dependencies
-RUN go get -u golang.org/x/oauth2
-RUN go get -u golang.org/x/oauth2/google
-RUN go get -u google.golang.org/api/sheets/v4
+RUN go mod vendor
 
 RUN go build -o voluum-apis
 

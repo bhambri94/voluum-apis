@@ -10,10 +10,8 @@ import (
 
 func main() {
 	config.SetConfig()
-	fmt.Println(config.Configurations.SpreadsheetId)
-
-	values, _, SheetName := voluum.GetDailyVoluumReport()
+	
+	values, _, SheetName := voluum.GetStandardVoluumReport()
 	sheets.ClearSheet(SheetName)
-	writeRange := SheetName + "!A1"
-	sheets.BatchWrite(writeRange, values)
+	sheets.BatchWrite(SheetName, values)
 }
