@@ -135,9 +135,7 @@ func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount i
 	secondBlankRow = append(secondBlankRow, "")
 	values = append(values, secondBlankRow)
 
-	if ShortlistedTrafficSources == nil {
-		ShortlistedTrafficSources = getShortlistedTrafficSources()
-	}
+	ShortlistedTrafficSources = getShortlistedTrafficSources()
 	fmt.Println("Preparing final sheet to be pushed to Google Sheets")
 
 	rowID := 0
@@ -172,9 +170,7 @@ func getShortlistedTrafficSources() map[string]bool {
 }
 
 func addCostAndRevenueDayWiseToMap(dailyReport DailyReport, Day string) {
-	if ShortlistedTrafficSources == nil {
-		ShortlistedTrafficSources = getShortlistedTrafficSources()
-	}
+	ShortlistedTrafficSources = getShortlistedTrafficSources()
 	fmt.Println("Saving Costs and Revenue Day wise")
 	rowID := 0
 	for rowID < len(dailyReport.Rows) {
