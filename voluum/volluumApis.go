@@ -120,14 +120,14 @@ func floatToString(inputNum float64) string {
 	return strconv.FormatFloat(inputNum, 'f', 6, 64)
 }
 
-func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount int, Day int) ([][]interface{}, int) {
+func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount int, Day int, month string) ([][]interface{}, int) {
 	var values [][]interface{}
 	LocalDay := Day
 
 	var firstRowOfSheetLabels []interface{}
 	firstRowOfSheetLabels = append(firstRowOfSheetLabels, "Traffic Source Name", "Traffic Source ID", "Campaign Name", "Campaign ID")
 	for LocalDay > 1 {
-		firstRowOfSheetLabels = append(firstRowOfSheetLabels, "Cost-"+strconv.Itoa(LocalDay-1), "Revenue-"+strconv.Itoa(LocalDay-1))
+		firstRowOfSheetLabels = append(firstRowOfSheetLabels, "Cost - "+strconv.Itoa(LocalDay-1)+"/"+month, "Revenue - "+strconv.Itoa(LocalDay-1)+"/"+month)
 		LocalDay--
 	}
 	values = append(values, firstRowOfSheetLabels)
@@ -145,7 +145,15 @@ func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount i
 			var row []interface{}
 			row = append(row, dailyReport.Rows[rowID].TrafficSourceName, dailyReport.Rows[rowID].TrafficSourceID, dailyReport.Rows[rowID].CampaignName, dailyReport.Rows[rowID].CampaignID)
 			for LocalDay > 1 {
-				row = append(row, finalMapCost[dailyReport.Rows[rowID].CampaignID+strconv.Itoa(LocalDay)], finalMapRevenue[dailyReport.Rows[rowID].CampaignID+strconv.Itoa(LocalDay)])
+				var cost string
+				var revenue string
+				if val1, ok := finalMapCost[dailyReport.Rows[rowID].CampaignID+strconv.Itoa(LocalDay)]; ok {
+					cost = "$" + val1
+				}
+				if val2, ok2 := finalMapRevenue[dailyReport.Rows[rowID].CampaignID+strconv.Itoa(LocalDay)]; ok2 {
+					revenue = "$" + val2
+				}
+				row = append(row, cost, revenue)
 				LocalDay--
 			}
 			values = append(values, row)
@@ -186,10 +194,20 @@ func GetStandardVoluumReport() ([][]interface{}, int, string) {
 	var finalValuesToSheet [][]interface{}
 	var dailyReport DailyReport
 	var RowCount int
+	var monthYearDate string
+	var EndOfMonthFlag bool
+	var currentMonth string
 
 	currentTime := time.Now()
-	monthYearDate := currentTime.Month().String() + strconv.Itoa(currentTime.Year()) //This will be used as Google Sheet name
+	// currentTime := time.Date(2020, time.August, 1, 18, 59, 59, 0, time.UTC) //This can be used to manually fill a sheet with from desired date
 	currentDate := currentTime.Day()
+	if currentDate == 1 {
+		monthYearDate = currentTime.AddDate(0, -1, 0).Month().String() + strconv.Itoa(currentTime.Year()) //This will be used as Google Sheet name
+		EndOfMonthFlag = true
+		currentDate = 31
+	} else {
+		monthYearDate = currentTime.Month().String() + strconv.Itoa(currentTime.Year()) //This will be used as Google Sheet name
+	}
 
 	jdayIterator := 0
 	for currentDate > 1 {
@@ -200,11 +218,20 @@ func GetStandardVoluumReport() ([][]interface{}, int, string) {
 		currentDate--
 		jdayIterator--
 	}
-	fromDate := currentTime.AddDate(0, 0, -currentTime.Day()+1).Format("2006-01-02T00")
-	toDate := currentTime.Format("2006-01-02T00")
-	dailyReport, RowCount = GetVoluumReportsForMentionedDates(fromDate, toDate)
+	if EndOfMonthFlag {
+		fromDate := currentTime.AddDate(0, -1, 0).Format("2006-01-02T00")
+		toDate := currentTime.Format("2006-01-02T00")
+		dailyReport, RowCount = GetVoluumReportsForMentionedDates(fromDate, toDate)
+		currentDate = currentTime.AddDate(0, 0, -1).Day() + 1
+		currentMonth = strconv.Itoa(int(currentTime.AddDate(0, -1, 0).Month()))
+	} else {
+		fromDate := currentTime.AddDate(0, 0, -currentTime.Day()+1).Format("2006-01-02T00")
+		toDate := currentTime.Format("2006-01-02T00")
+		dailyReport, RowCount = GetVoluumReportsForMentionedDates(fromDate, toDate)
+		currentDate = currentTime.Day()
+		currentMonth = strconv.Itoa(int(currentTime.Month()))
+	}
 
-	currentDate = currentTime.Day()
-	finalValuesToSheet, RowCount = createFinalReportForThisMonthData(dailyReport, RowCount, currentDate)
+	finalValuesToSheet, RowCount = createFinalReportForThisMonthData(dailyReport, RowCount, currentDate, currentMonth)
 	return finalValuesToSheet, RowCount, monthYearDate
 }
