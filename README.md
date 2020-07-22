@@ -23,7 +23,7 @@ git clone https://github.com/bhambri94/voluum-apis.git
 cd voluum-apis/
 
 vi config.json 
-//save the configs shared above with spreadhseet id and voluum access key and to the file
+//save the configs shared above with spreadhseet id and voluum access key and id to the file
 
 docker build -t voluum-apis:v1.0 .
 
