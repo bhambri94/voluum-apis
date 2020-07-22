@@ -6,6 +6,7 @@ This script can be used with a cron setup and which pulls out the daily report a
 To run this script you just need Docker and config.json which will have your Access Keys and couple of flags file in root directory of project.
 
 config.json should have below mandatory fields:
+```
 {
     "SpreadsheetId" : "*********************",
     "VoluumAccessId" : "***********************",
@@ -14,6 +15,7 @@ config.json should have below mandatory fields:
     "TrafficSourcesShortlisted" :["Advertizer", "Facebook", "Zeropark"],
     "TrafficSourceFilteringEnabled" :false
 }
+```
 
 ```
 git clone https://github.com/bhambri94/voluum-apis.git
