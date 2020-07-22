@@ -33,9 +33,9 @@ docker run -it --name voluum-apis -v $PWD/src:/go/src/voluum-apis voluum-apis:v1
 
 ```
 
-While we run this project for the first time, we would need Google Account Access Token and Refresh Token. We need to enter the access key only for the first time to run.
+While we run this project for the first time, we would need Google Account Access Token and Refresh Token. We need to enter a code for the first time while running this project.
 
-Once you run the `docker run` last command first time, a link will be displayed in the command line, which we need to open in a browser, it will ask for `Allow message` to use your account and grant access to write in Google Sheets. Once you click the Allow button, a token.json file will be generated at the root directory of the project. 
+Once you run the `docker run` last command shared above, a link will be displayed in the command line, which we need to open in a browser, it will ask for `Allow message` to use your account and grant access to write in the Google Sheet. Once we click the Allow button, a code would be generated, that we need to paste in console, after successful verification a token.json file will be generated at the root directory of the project. 
 Note: This file will need to be regenerated if we have created a new Docker build.
 
 ###Cron job
