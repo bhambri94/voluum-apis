@@ -39,6 +39,7 @@ Once you run the `docker run` last command shared above, a link will be displaye
 Note: This file will need to be regenerated if we have created a new Docker build.
 
 ###Cron job
+
 To setup a Daily Cron job, please follow following steps:
  
 ```
