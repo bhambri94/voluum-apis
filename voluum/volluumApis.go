@@ -106,7 +106,7 @@ func getAccessToken() string {
 func GetVoluumReportsForMentionedDates(fromDate string, toDate string) (DailyReport, int) {
 	token := getAccessToken()
 	fmt.Println("Calling Get Vollum Report api for dates from: " + fromDate + " to: " + toDate)
-	req, err := http.NewRequest("GET", "https://api.voluum.com/report?include="+configs.Configurations.IncludeTrafficSources+"&limit=10000&groupBy=traffic_source_id&groupBy=campaign_id&from="+fromDate+"&to="+toDate+"&column=traffic_source_id&column=traffic_source&column=campaign_id&column=campaign&column=cost&column=revenue", nil)
+	req, err := http.NewRequest("GET", "https://api.voluum.com/report?tz=America/Bogota&include="+configs.Configurations.IncludeTrafficSources+"&limit=10000&groupBy=traffic_source_id&groupBy=campaign_id&from="+fromDate+"&to="+toDate+"&column=traffic_source_id&column=traffic_source&column=campaign_id&column=campaign&column=cost&column=revenue", nil)
 	if err != nil {
 		// handle err
 	}
@@ -138,7 +138,7 @@ func GetVoluumReportsForCustomVariables(fromDate string, toDate string, ApiVaria
 	token := getAccessToken()
 	fmt.Println("Calling Get Vollum Report api for custom variable from: " + fromDate + " to: " + toDate)
 
-	req, err := http.NewRequest("GET", "https://api.voluum.com/report?groupBy=traffic_source_id&groupBy=campaign_id&groupBy="+ApiVariableName+"&from="+fromDate+"&to="+toDate+"&column=campaign_id&column=traffic_source_id&column=revenue&column="+ApiVariableName+"&column="+customVariableName+"&limit=10000&Include="+config.Configurations.IncludeTrafficSources+"&filter1=traffic_source_id&filter1Value="+TrafficSourceId, nil)
+	req, err := http.NewRequest("GET", "https://api.voluum.com/report?tz=America/Bogota&groupBy=traffic_source_id&groupBy=campaign_id&groupBy="+ApiVariableName+"&from="+fromDate+"&to="+toDate+"&column=campaign_id&column=traffic_source_id&column=revenue&column="+ApiVariableName+"&column="+customVariableName+"&limit=10000&Include="+config.Configurations.IncludeTrafficSources+"&filter1=traffic_source_id&filter1Value="+TrafficSourceId, nil)
 	if err != nil {
 		// handle err
 	}
@@ -294,7 +294,8 @@ func GetStandardVoluumReport() ([][]interface{}, int, string) {
 	var EndOfMonthFlag bool
 	var currentMonth string
 
-	currentTime := time.Now()
+	loc, _ := time.LoadLocation("America/Bogota")
+	currentTime := time.Now().In(loc)
 	// currentTime := time.Date(2020, time.July, 1, 18, 59, 59, 0, time.UTC) //This can be used to manually fill a sheet with from desired date
 	currentDate := currentTime.Day()
 	if currentDate == 1 {
