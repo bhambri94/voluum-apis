@@ -14,6 +14,20 @@ type Configs struct {
 	IncludeTrafficSources         string
 	VoluumAccessId                string
 	VoluumAccessKey               string
+	RevenueViaCustomVariable      struct {
+		Key                string `json:"Key"`
+		CustomVariableName string `json:"CustomVariableName"`
+		TrafficSourceId    string `json:"TrafficSourceId"`
+		FieldName          string `json:"FieldName"`
+		APIVariableName    string `json:"ApiVariableName"`
+	} `json:"RevenueViaCustomVariable"`
+	TSMappingViaCustomVariable struct {
+		Key                string `json:"Key"`
+		CustomVariableName string `json:"CustomVariableName"`
+		TrafficSourceId    string `json:"TrafficSourceId"`
+		FieldName          string `json:"FieldName"`
+		APIVariableName    string `json:"ApiVariableName"`
+	} `json:"TSMappingViaCustomVariable"`
 }
 
 var (
@@ -30,7 +44,7 @@ func SetConfig() {
 		fmt.Println("Config file is missing in root directory")
 		panic(error)
 	} else {
-		fmt.Println("Follwing values has been picked from ")
+		fmt.Println("Follwing values has been picked from config values:")
 		fmt.Println(Configurations)
 	}
 }
