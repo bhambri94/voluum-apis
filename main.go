@@ -8,8 +8,21 @@ import (
 
 func main() {
 	config.SetConfig()
-
-	values, _, SheetName := voluum.GetStandardVoluumReport()
+	valuesFromDailyReport, _, SheetName := voluum.GetStandardVoluumReport()
+	valuesFromCustomVariableReport, _, _ := voluum.GetRevenueBasedOnCusomtVariable10()
+	values := concattwoInterfaces(valuesFromDailyReport, valuesFromCustomVariableReport)
 	sheets.ClearSheet(SheetName)
 	sheets.BatchWrite(SheetName, values)
+
+}
+
+func concattwoInterfaces(interface1 [][]interface{}, interface2 [][]interface{}) [][]interface{} {
+	var finalValues [][]interface{}
+	for i := range interface1 {
+		finalValues = append(finalValues, interface1[i])
+	}
+	for i := range interface2 {
+		finalValues = append(finalValues, interface2[i])
+	}
+	return finalValues
 }

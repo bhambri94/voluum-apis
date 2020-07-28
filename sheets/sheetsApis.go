@@ -185,3 +185,20 @@ func ClearSheet(SheetName string) {
 		}
 	}
 }
+
+func BatchAppend(SheetName string, value [][]interface{}) {
+	if srv == nil {
+		srv = getClient()
+	}
+	spreadsheetId := config.Configurations.SpreadsheetId
+	valueInputOption := "RAW"
+	insertDataOption := "INSERT_ROWS"
+	rb := &sheets.ValueRange{
+		Range:  SheetName,
+		Values: value,
+	}
+	_, err := srv.Spreadsheets.Values.Append(spreadsheetId, SheetName, rb).ValueInputOption(valueInputOption).InsertDataOption(insertDataOption).Context(context.Background()).Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+}

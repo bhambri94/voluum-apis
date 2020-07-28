@@ -191,7 +191,7 @@ func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount i
 	rowID := 0
 	for rowID < FinalRowsCount {
 		LocalDay = Day
-		if ShortlistedTrafficSources[strings.ToLower(dailyReport.Rows[rowID].TrafficSourceName)] || !config.Configurations.TrafficSourceFilteringEnabled {
+		if ShortlistedTrafficSources[strings.ToLower(dailyReport.Rows[rowID].TrafficSourceName)] || !config.Configurations.TrafficSourceFilteringEnabled && (strings.ToLower(dailyReport.Rows[rowID].TrafficSourceID) != strings.ToLower(config.Configurations.TSMappingViaCustomVariable.TrafficSourceId)) {
 			var row []interface{}
 			var customVariableTS string
 			if val3, ok3 := finalMapCustomVariableTS[strings.ToLower(dailyReport.Rows[rowID].CampaignID)+strconv.Itoa(LocalDay)]; ok3 {
@@ -227,10 +227,11 @@ func createFinalReportForThisMonthData(dailyReport DailyReport, FinalRowsCount i
 }
 
 var (
-	finalMapCost              = make(map[string]float64)
-	finalMapRevenue           = make(map[string]float64)
-	finalMapCustomVariableTS  = make(map[string]string)
-	ShortlistedTrafficSources = make(map[string]bool)
+	finalMapCost                      = make(map[string]float64)
+	finalMapRevenue                   = make(map[string]float64)
+	finalMapCustomVariableTS          = make(map[string]string)
+	finalRevenueMapCustomVariable10TS = make(map[string]float64)
+	ShortlistedTrafficSources         = make(map[string]bool)
 )
 
 func getShortlistedTrafficSources() map[string]bool {
@@ -254,11 +255,11 @@ func addCostAndRevenueDayWiseToMap(dailyReport DailyReport, Day string, fromDate
 				dailyRevenueReport := GetVoluumReportsForCustomVariables(fromDate, toDate, config.Configurations.RevenueViaCustomVariable.APIVariableName, config.Configurations.RevenueViaCustomVariable.CustomVariableName, config.Configurations.RevenueViaCustomVariable.TrafficSourceId)
 				revenuerowID := 0
 				for revenuerowID < len(dailyRevenueReport.Rows) {
-					if dailyRevenueReport.Rows[revenuerowID].CustomVariable1TS == config.Configurations.RevenueViaCustomVariable.FieldName && IsValidUUID(dailyRevenueReport.Rows[revenuerowID].CustomVariable1) {
+					if dailyRevenueReport.Rows[revenuerowID].CustomVariable1TS == config.Configurations.RevenueViaCustomVariable.FieldName && IsValidCampaignId(dailyRevenueReport.Rows[revenuerowID].CustomVariable1) {
 						finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CustomVariable1)+Day] = finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CustomVariable1)+Day] + dailyRevenueReport.Rows[revenuerowID].Revenue
 					} else if dailyRevenueReport.Rows[revenuerowID].CustomVariable1TS != config.Configurations.RevenueViaCustomVariable.Key && dailyRevenueReport.Rows[revenuerowID].TrafficSourceName != config.Configurations.RevenueViaCustomVariable.Key {
 						finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CampaignID)+Day] = finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CampaignID)+Day] + dailyRevenueReport.Rows[revenuerowID].Revenue
-					} else if dailyRevenueReport.Rows[revenuerowID].CustomVariable1TS == config.Configurations.RevenueViaCustomVariable.FieldName && !IsValidUUID(dailyRevenueReport.Rows[revenuerowID].CustomVariable1) {
+					} else if dailyRevenueReport.Rows[revenuerowID].CustomVariable1TS == config.Configurations.RevenueViaCustomVariable.FieldName && !IsValidCampaignId(dailyRevenueReport.Rows[revenuerowID].CustomVariable1) {
 						finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CampaignID)+Day] = finalMapRevenue[strings.ToLower(dailyRevenueReport.Rows[revenuerowID].CampaignID)+Day] + dailyRevenueReport.Rows[revenuerowID].Revenue
 					}
 					revenuerowID++
@@ -273,7 +274,7 @@ func addCostAndRevenueDayWiseToMap(dailyReport DailyReport, Day string, fromDate
 				customVariableReport := GetVoluumReportsForCustomVariables(fromDate, toDate, config.Configurations.TSMappingViaCustomVariable.APIVariableName, config.Configurations.TSMappingViaCustomVariable.CustomVariableName, config.Configurations.TSMappingViaCustomVariable.TrafficSourceId)
 				customVariableRowID := 0
 				for customVariableRowID < len(customVariableReport.Rows) {
-					if customVariableReport.Rows[customVariableRowID].CustomVariable10TS == config.Configurations.TSMappingViaCustomVariable.FieldName && IsValidUUID(customVariableReport.Rows[customVariableRowID].CustomVariable10) {
+					if customVariableReport.Rows[customVariableRowID].CustomVariable10TS == config.Configurations.TSMappingViaCustomVariable.FieldName && IsValidCampaignId(customVariableReport.Rows[customVariableRowID].CustomVariable10) {
 						finalMapCustomVariableTS[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+Day] = finalMapCustomVariableTS[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+Day] + ", " + customVariableReport.Rows[customVariableRowID].CustomVariable10
 					}
 					customVariableRowID++
@@ -333,7 +334,101 @@ func GetStandardVoluumReport() ([][]interface{}, int, string) {
 	return finalValuesToSheet, RowCount, monthYearDate
 }
 
-func IsValidUUID(u string) bool {
+func GetRevenueBasedOnCusomtVariable10() ([][]interface{}, int, string) {
+	var finalValuesToSheet [][]interface{}
+	var customVariableReport CustomVariableReport
+	var RowCount int
+	var monthYearDate string
+	var EndOfMonthFlag bool
+
+	loc, _ := time.LoadLocation("America/Bogota")
+	currentTime := time.Now().In(loc)
+	// currentTime := time.Date(2020, time.July, 1, 18, 59, 59, 0, time.UTC) //This can be used to manually fill a sheet with from desired date
+	currentDate := currentTime.Day()
+	if currentDate == 1 {
+		monthYearDate = currentTime.AddDate(0, -1, 0).Month().String() + strconv.Itoa(currentTime.Year()) //This will be used as Google Sheet name
+		EndOfMonthFlag = true
+		currentDate = 31
+	} else {
+		monthYearDate = currentTime.Month().String() + strconv.Itoa(currentTime.Year()) //This will be used as Google Sheet name
+	}
+
+	jdayIterator := 0
+	for currentDate > 1 {
+		fromDate := currentTime.AddDate(0, 0, jdayIterator-1).Format("2006-01-02T00")
+		toDate := currentTime.AddDate(0, 0, jdayIterator).Format("2006-01-02T00")
+		customVariableReport = GetVoluumReportsForCustomVariables(fromDate, toDate, config.Configurations.TSMappingViaCustomVariable.APIVariableName, config.Configurations.TSMappingViaCustomVariable.CustomVariableName, config.Configurations.TSMappingViaCustomVariable.TrafficSourceId)
+		addRevenueForCustomVaraibleDayWiseToMap(customVariableReport, strconv.Itoa(currentDate), fromDate, toDate)
+		currentDate--
+		jdayIterator--
+	}
+	if EndOfMonthFlag {
+		currentDate = currentTime.AddDate(0, 0, -1).Day() + 1
+	} else {
+		currentDate = currentTime.Day()
+	}
+
+	finalValuesToSheet, RowCount = createFinalReportForCustomVariableData(currentDate)
+	return finalValuesToSheet, RowCount, monthYearDate
+}
+
+var (
+	UniqueCustomVariableValues [][]interface{}
+	UniqueCustomVariableRows   = make(map[string]bool)
+)
+
+func addRevenueForCustomVaraibleDayWiseToMap(customVariableReport CustomVariableReport, Day string, fromDate string, toDate string) {
+	fmt.Println("Saving Revenue based on custom variable 10")
+
+	customVariableRowID := 0
+	for customVariableRowID < len(customVariableReport.Rows) {
+		if customVariableReport.Rows[customVariableRowID].CustomVariable10TS == config.Configurations.TSMappingViaCustomVariable.FieldName {
+			if _, ok := UniqueCustomVariableRows[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+strings.ToLower(customVariableReport.Rows[customVariableRowID].CustomVariable10)]; !ok {
+				var row []interface{}
+				row = append(row, customVariableReport.Rows[customVariableRowID].TrafficSourceName, customVariableReport.Rows[customVariableRowID].TrafficSourceID, customVariableReport.Rows[customVariableRowID].CampaignName, customVariableReport.Rows[customVariableRowID].CampaignID, customVariableReport.Rows[customVariableRowID].CustomVariable10)
+				UniqueCustomVariableValues = append(UniqueCustomVariableValues, row)
+				UniqueCustomVariableRows[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+strings.ToLower(customVariableReport.Rows[customVariableRowID].CustomVariable10)] = true
+			}
+			finalRevenueMapCustomVariable10TS[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+strings.ToLower(customVariableReport.Rows[customVariableRowID].CustomVariable10)+Day] = finalRevenueMapCustomVariable10TS[strings.ToLower(customVariableReport.Rows[customVariableRowID].CampaignID)+strings.ToLower(customVariableReport.Rows[customVariableRowID].CustomVariable10)+Day] + customVariableReport.Rows[customVariableRowID].Revenue
+		}
+		customVariableRowID++
+	}
+
+}
+
+func createFinalReportForCustomVariableData(Day int) ([][]interface{}, int) {
+	var values [][]interface{}
+	rowId := 0
+	fmt.Println("Preparing final sheet For Custom Variable Data to be pushed to Google Sheets")
+
+	for i := range UniqueCustomVariableValues {
+		var row []interface{}
+		var concatCampaignIdAndTS string
+		for j := range UniqueCustomVariableValues[i] {
+			row = append(row, UniqueCustomVariableValues[i][j])
+			concatCampaignIdAndTS = strings.ToLower(UniqueCustomVariableValues[i][3].(string) + UniqueCustomVariableValues[i][4].(string))
+		}
+		LocalDay := Day
+		for LocalDay > 1 {
+			var cost string
+			var revenue string
+			if val, ok := finalRevenueMapCustomVariable10TS[concatCampaignIdAndTS+strconv.Itoa(LocalDay)]; ok {
+				if floatToString(val) != "0.000000" {
+					revenue = "$" + floatToString(val)
+				} else {
+					revenue = ""
+				}
+			}
+			row = append(row, cost, revenue)
+			LocalDay--
+		}
+		rowId++
+		values = append(values, row)
+	}
+	return values, rowId
+}
+
+func IsValidCampaignId(u string) bool {
 	length := len(u)
 	if length > 16 {
 		return true
